@@ -17,16 +17,18 @@
 \href{https://github.com/jondoesntgit/willireply}{https://github.com/jondoesntgit/willireply}
 \end{center}
 
-\section{Background} More than a million emails are sent every second. Millions of dollars have been invested in research to help marketing companies write emails that will be read [citation needed]. As a result, our email inboxes are filled with flashy emails that try to maximize the probability of us spending money, or minimize the probability of us unsubscribing.
-
+\section{Background} 
 According to one study, business users receive about 140 emails per day, and send about 43 emails per day.\cite{emailstatistics} If we assume that half of the emails that business users send are in response to another email, then only 15\% of emails need a response and the other 85\% are either informational, or require some other action not in the form of an email reply. Work has been done in classifying emails into types calls for papers\cite{learningrulesthatclassifyemail}, spam\cite{filteringjunkemail}, so-called ``interesting email''\cite{emailclassification}. Various patents exist disclosing techniques to classify emails\cite{Goodman:2014ug,Bellegarda:2010wk,Romero:2005vs}, and one patent specifically discloses a means of predicting actions (such as replying, forwarding, and deleting) that a user may execute given a new email\cite{Weber:2012tv}.
 
 \section{Task Definition}
 We propose building an artificial intelligence that trains on your personal email history (or combines your email history with other users' emails it has trained on), and then predicts whether you will respond to some arbitrary future email that you receive.\footnote{Note, that we may also consider using some much much larger datasets as well, like the Enron Corpus\cite{enroncorpus}} The input is an email (fetched via python's standard imaplib library), and the output is a 1 if the email was responded to, and a 0 if the email was not responded to. The label is assigned by searching through a user's ``Sent Email'' folder, and searching for emails where the ``Reply-Id'' matches the ``Message-Id'' of an email in the user's ``Archive'' or ``Inbox'' folder. This algorithm can be integrated with another service (like push notifications on your phone) so that you only get notified when you receive an email from someone who is expecting a reply. You can then batch the rest of your non-time critical email together such that you process it daily. From the outside, users will infer from your rapid responses that you are always checking your email, when in reality, you are only responding to perhaps the 15\% of emails that require immediate responses.
 
 \begin{center}
-$\vcenter{\hbox{\includegraphics[height=1.5in]{reply_screenshot.png}}} \rightarrow 1 \hspace{1em} \vcenter{\hbox{\includegraphics[height=1.5in]{no_reply.png}}} \rightarrow 0$
+$\vcenter{\hbox{\includegraphics[height=1.5in]{no_reply.png}}} \rightarrow 0 \hspace{3em} 
+\vcenter{\hbox{\includegraphics[height=1.5in]{reply_screenshot.png}}} \rightarrow 1 $
 \end{center}
+
+The overall approach to solving this problem will include machine learning. Various feature extractors, loss functions, and regression models will be considered over a range of experiments. Different datasets, made up of either individual users or groups of users will also be considered to see how the model needs to change when analyzing each individuals' email policies.
 
 %\subsection{Evaluation}
 Binary classifiers are often characterized by their `precision' and `recall' parameters. In our case, the precision of the `reply' label will tell us how often a prediction that we would reply to an email was correct, and the recall of the `reply' label will tell us what percentage of the emails that require a response are correctly being identified. Because we get a lot of spam (about 85\% of email is estimated not to need a reply), the precision and recall of the `no reply' label will always be quite high, and we are not interested in optimizing these parameters.
