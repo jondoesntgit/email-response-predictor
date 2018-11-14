@@ -9,7 +9,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 OUTPUT_DIRECTORY = Path('../../data/raw')
-SQLITE3_PATH = OUTPUT_DIRECTORY / 'data_with_fw.sqlite3'
+SQLITE3_PATH = OUTPUT_DIRECTORY / 'data3.sqlite3'
 
 WILLIREPLY_EMAIL = os.getenv('WILLIREPLY_EMAIL')
 if not WILLIREPLY_EMAIL:
@@ -23,21 +23,26 @@ SMTP_PORT   = 993
 
 EMAIL_FOLDERS = {
     #'received' : 'inbox',
-    'received' : '[Gmail]/Archive',
+    #'received' : '[Gmail]/Archive',
     'sent' : '"[Gmail]/Sent Mail"'
 }
 
 def download_emails_from_gmail():
     mail = imaplib.IMAP4_SSL(SMTP_SERVER)
+
     mail.login(WILLIREPLY_EMAIL,WILLIREPLY_PASSWORD)
-    #mail.select()
+
     for folder_type, folder_name in EMAIL_FOLDERS.items():
+
         save_to_directory = Path(OUTPUT_DIRECTORY) / folder_type
         save_to_directory.mkdir(parents=True, exist_ok=True)
+
         res = mail.select(folder_name)
         type_, data = mail.search(None, 'ALL')
         mail_ids = data[0]
+
         id_list = mail_ids.split()
+
         num2download = 2000
         for file, i in tqdm(enumerate(id_list[-num2download:]), total=num2download, desc=folder_name):
             typ, data = mail.fetch(i, '(RFC822)' )
@@ -53,17 +58,14 @@ def index_emails():
         (id INTEGER PRIMARY KEY AUTOINCREMENT, 
         filename text, 
         folder text, 
-        sender text,
-        recipients text, 
+        sender text, 
         subject text, 
         body text, 
         bodytype text, 
         message_id text, 
         reply_id text, 
-        did_reply bool,
-        multiple_recipients bool,
-        re_in_subject bool,
-        fw_in_subject bool);''')
+        did_reply bool);''')
+
     for folder in EMAIL_FOLDERS:
         folder_path = Path(OUTPUT_DIRECTORY) / folder
         for email_file in folder_path.glob('**/*.eml'):
@@ -72,6 +74,7 @@ def index_emails():
                     m = email.message_from_file(f)
                 except:
                     continue
+
             body = ''
             body_type = 'html'
             for part in m.walk():
@@ -80,14 +83,17 @@ def index_emails():
                 if part.get_content_type() == 'text/plain':
                     body = part.get_payload()
                     body_type = 'plain'
+
             reply_id = ''
             if 'In-Reply-To' in m:
                 reply_id = m['In-Reply-To']
+
             fields = (str(email_file.name), str(email_file.parent.name),
-                m['from'], m['to'], m['subject'], body, body_type,
-                m['Message-Id'], reply_id, 0, 0, 0, 0)
-            c.execute('''INSERT INTO emails (filename, folder, sender, recipients, subject, body, bodytype, message_id, reply_id, did_reply, multiple_recipients, re_in_subject, fw_in_subject)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', fields)
+                m['from'], m['subject'], body, body_type,
+                m['Message-Id'], reply_id, 0)
+            c.execute('''INSERT INTO emails (filename, folder, sender, subject, body, bodytype, message_id, reply_id, did_reply)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', fields)
+
     conn.commit()
 
 def flag_emails_with_responses():
@@ -105,45 +111,7 @@ def flag_emails_with_responses():
     ''')
     conn.commit()
 
-def flag_emails_with_re_subject():
-    conn = sqlite3.connect(str(SQLITE3_PATH))
-    c = conn.cursor()
-    c.execute('''
-    UPDATE emails 
-    SET re_in_subject = 1 
-    WHERE subject like "Re: %";
-    ''')
-    conn.commit()
-
-def flag_emails_with_fw_subject():
-    conn = sqlite3.connect(str(SQLITE3_PATH))
-    c = conn.cursor()
-    c.execute('''
-    UPDATE emails 
-    SET fw_in_subject = 1 
-    WHERE subject like "Fwd: %";
-    ''')
-    conn.commit()
-
-
-def flag_emails_with_mult_recipients():
-    conn = sqlite3.connect(str(SQLITE3_PATH))
-    c = conn.cursor()
-    c.execute('''
-    UPDATE emails 
-    SET multiple_recipients = 1 
-    WHERE id in (
-        SELECT e_received.id 
-        FROM emails as e_received 
-        WHERE length(e_received.recipients) - length(replace(e_received.recipients, "@",'')) > 1
-        );
-    ''')
-    conn.commit()
-
 if __name__ == "__main__":
     download_emails_from_gmail()
     index_emails()
-    flag_emails_with_mult_recipients()
     flag_emails_with_responses()
-    flag_emails_with_re_subject()
-    flag_emails_with_fw_subject()
