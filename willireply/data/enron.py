@@ -17,6 +17,8 @@ import sqlite3
 import datetime
 from dateutil import parser
 from tqdm.autonotebook import tqdm # progress bars
+import logging
+
 
 # find .env automagically by walking up directories until it's found
 dotenv_path = find_dotenv()
@@ -25,7 +27,9 @@ dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
 ENRON_FOLDER = Path(os.environ.get("ENRON_FOLDER")).expanduser()
-ENRON_INDEX = Path(os.environ.get("ENRON_INDEX")).expanduser()
+ENRON_INDEX_FOLDER = Path(os.environ.get("ENRON_INDEX_FOLDER")).expanduser()
+ENRON_LOG = Path(os.environ.get("ENRON_LOG")).expanduser()
+logging.basicConfig(filename=str(ENRON_LOG), filemode='w', level=logging.DEBUG)
 
 def index_folder(user, folder, cursor):
     for email_file in (ENRON_FOLDER/user/folder).glob('*'):
@@ -38,7 +42,7 @@ def index_folder(user, folder, cursor):
             try:
                 m = email.message_from_file(f)
             except:
-                print('Couldnt open %s' % f)
+                logging.info('Couldnt open %s' % f)
                 continue
         body = None
         for part in m.walk():
@@ -61,11 +65,10 @@ def index_folder(user, folder, cursor):
                   f'VALUES ({",".join("?"*len(data))});',
                   tuple(data.values()))
 
-def index():
-    conn = sqlite3.connect(str(ENRON_INDEX))
+def make_empty_index(filename):
+    conn = sqlite3.connect(str(ENRON_INDEX_FOLDER/filename))
     c = conn.cursor()
     c.execute('''DROP TABLE IF EXISTS emails;''')
-
     # to and from are reserved keywords. Add a m_ before so we can work with the variables
     c.execute('''CREATE TABLE emails
         (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,32 +84,83 @@ def index():
         did_reply INT,
         reply_id INTEGER
         );''')
+    return conn
 
+def index(*users):
+    """
+    Creates indicies for the users specified.
 
-    users = list(f.stem for f in ENRON_FOLDER.iterdir())
+    If none, all users will be indexed
+    If a list, only the users in the list will be indexed
+    If a string, only that user will be indexed
+    Otherwise, raise a value error
+    """
+    if not users:
+        users = list(f.stem for f in ENRON_FOLDER.iterdir())
 
-    user_bar = tqdm(users, desc='users', leave=False)
-    for user in user_bar:
-        user_bar.set_description("{:<15}".format(user))
+    if len(users) > 1:
+        # if we will fail, fail early
+        for user in users:
+            if not (ENRON_FOLDER / user).is_dir():
+                raise ValueError(user, 'is not in corpus')
+
+        user_bar = tqdm(users, desc='users', leave=False)
+        for user in user_bar:
+            user_bar.set_description("{:<15}".format(user))
+            index(user)
+
+    elif len(users) == 1:
+        user = users[0]
+        if not (ENRON_FOLDER / user).is_dir():
+            raise ValueError(user, 'is not in corpus')
+        filename = user + '.sqlite3'
+        conn = make_empty_index(filename)
+        c = conn.cursor()
+
         folders = [f.stem for f in (ENRON_FOLDER/user).iterdir() if f.is_dir()]
         folder_bar = tqdm(folders, leave=False, desc='folders')
         for folder in folder_bar:
             index_folder(user=user, folder=folder, cursor=c)
-    conn.commit()
+        conn.commit()
 
-def label():
-    conn = sqlite3.connect(str(ENRON_INDEX))
-    c = conn.cursor()
-    users = [res[0] for res in c.execute('SELECT DISTINCT user FROM emails')]
-    user_bar = tqdm(users, leave=False)
-    for user in user_bar:
-        user_bar.set_description('{:<15}'.format(user))
+    else:        
+        assert False, 'length of args should be positive. Perhaps ENRON_FOLDER is empty'
+
+def label(*users):
+    """Labels the datasets.
+
+    if users is none, it labels everything in ENRON_INDEX_FOLDER
+
+    if it's a specific user, then it labels that specific user's index
+    """
+
+    if not users:
+        users = list(f.stem for f in ENRON_INDEX_FOLDER.iterdir())
+
+    if len(users) > 1:
+        # if we will fail, fail early
+        for user in users:
+            if not (ENRON_INDEX_FOLDER / (user + '.sqlite3')).is_file():
+                raise ValueError(user, 'is not in index folder')
+
+        user_bar = tqdm(users, desc='users', leave=False)
+        for user in user_bar:
+            user_bar.set_description("{:<15}".format(user))
+            label(user)
+
+    elif len(users) == 1:
+        user = users[0]
+        filename = ENRON_INDEX_FOLDER / (user + '.sqlite3')
+        if not filename.is_file():
+            raise ValueError(user, 'is not in index folder')
+        conn = sqlite3.connect(str(filename))
+        c = conn.cursor()
+
         emails_df = pd.read_sql_query(f'select * from emails where user="{user}";', conn)
         sent_folders = [f for f in  np.unique(emails_df.folder.values) if ('sent' in f.lower())]
         received_emails = emails_df.query(f'folder not in {sent_folders}')
         sent_emails = emails_df.query(f'folder in {sent_folders}')
 
-        emails_with_responses = []
         emails_bar = tqdm(list(received_emails.iterrows()), leave=False, desc='emails')
         for received_idx, email in emails_bar:
             date = email['date']
@@ -124,7 +178,20 @@ def label():
             this_id = email['id']
             c.execute(f'UPDATE emails SET did_reply=1, reply_id= ? WHERE id=?;', (reply_id, this_id,))
             conn.commit()
+        c.execute(f'UPDATE emails SET did_reply=0 WHERE did_reply IS NULL;')
+        conn.commit()
+    else:
+        assert False, 'length of args should be positive. Perhaps ENRON_FOLDER is empty'
+
+def is_labeled(user):
+    filename = ENRON_INDEX_FOLDER / (user + '.sqlite3')
+    if not filename.is_file():
+        raise ValueError(user, 'is not in index folder')
+    conn = sqlite3.connect(str(filename))
+    c = conn.cursor()
+    to_be_labeled = c.execute('select count(*) from emails where did_reply IS NULL;').fetchone()[0]
+    return to_be_labeled == 0
 
 if __name__ == "__main__":
-#    index()
+    index()
     label()
