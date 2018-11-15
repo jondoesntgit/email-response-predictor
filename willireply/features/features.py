@@ -4,6 +4,7 @@ Stuffed full of yummy features
 
 import re
 import pandas as pd
+import numpy as np
 
 def was_forwarded(df):
     """Looks to see if something like fw or fwd is in the subject.
@@ -31,10 +32,18 @@ def common_words_subject(df, words):
     Each cell is the number of times word[N] occurs in df[M].body (case insensitive"""
     return df[['subject']].apply(lambda x: pd.Series([x['subject'].lower().count(word.lower()) for word in words]), axis=1).values
 
-
 def number_of_ccs(df):
     """Counts the number of CC'd"""
     if df['m_cc'] is not None and len(df['m_cc'].apply(lambda x: len(x.split(','))).values) > 0:
         return df['m_cc'].apply(lambda x: len(x.split(','))).values
     else:
         return 0
+
+def words_in_subject(df):
+    return df['subject'].apply(lambda x: len(x.split()))
+
+def words_in_body(df):
+    return df['body'].apply(lambda x: len(x.split()))
+
+def thread_length(df):
+    return df['body'] = df['body'].apply(lambda x: re.split(r'-----Original Message-----|on\s[0-1][0-9]/[0-3][0-9]/[0-9]{2,4}', x)[0])
