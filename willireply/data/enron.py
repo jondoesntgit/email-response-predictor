@@ -14,6 +14,8 @@ import pandas as pd
 import numpy as np
 import re
 import sqlite3
+import datetime
+from dateutil import parser
 from tqdm.autonotebook import tqdm # progress bars
 
 # find .env automagically by walking up directories until it's found
@@ -24,6 +26,40 @@ load_dotenv(dotenv_path)
 
 ENRON_FOLDER = Path(os.environ.get("ENRON_FOLDER")).expanduser()
 ENRON_INDEX = Path(os.environ.get("ENRON_INDEX")).expanduser()
+
+def index_folder(user, folder, cursor):
+    for email_file in (ENRON_FOLDER/user/folder).glob('*'):
+        assert email_file.exists()
+        if email_file.is_dir():
+            # Recurse to look for more emails
+            index_folder(user, str(folder) + '/' + str(email_file), cursor)
+            continue
+        with open(email_file) as f:
+            try:
+                m = email.message_from_file(f)
+            except:
+                print('Couldnt open %s' % f)
+                continue
+        body = None
+        for part in m.walk():
+            body = part.get_payload()
+            break
+        if body is None:
+            continue
+        data = {
+            "user": user,
+            "folder": folder,
+            "filename": str(email_file),
+            "message_id": m['Message-ID'],
+            "date": int(parser.parse(m['Date']).timestamp()),
+            "m_from": m['From'],
+            "m_to": m['To'],
+            "subject": m['Subject'],
+            "body": body
+        }
+        cursor.execute(f'INSERT INTO emails({",".join(data.keys())})'
+                  f'VALUES ({",".join("?"*len(data))});',
+                  tuple(data.values()))
 
 def index():
     conn = sqlite3.connect(str(ENRON_INDEX))
@@ -46,8 +82,6 @@ def index():
         reply_id INTEGER
         );''')
 
-    import datetime
-    from dateutil import parser
 
     users = list(f.stem for f in ENRON_FOLDER.iterdir())
 
@@ -57,38 +91,7 @@ def index():
         folders = [f.stem for f in (ENRON_FOLDER/user).iterdir() if f.is_dir()]
         folder_bar = tqdm(folders, leave=False, desc='folders')
         for folder in folder_bar:
-        #    folder_bar.set_description("{:<15}".format(folder))
-            for email_file in (ENRON_FOLDER/user/folder).glob('*'):
-                assert email_file.exists()
-                if not email_file.is_file():
-                    print(email_file, "is not a file")
-                    continue
-                with open(email_file) as f:
-                    try:
-                        m = email.message_from_file(f)
-                    except:
-                        print('Couldnt open %s' % f)
-                        continue
-                body = None
-                for part in m.walk():
-                    body = part.get_payload()
-                    break
-                if body is None:
-                    continue
-                data = {
-                    "user": user,
-                    "folder": folder,
-                    "filename": str(email_file),
-                    "message_id": m['Message-ID'],
-                    "date": int(parser.parse(m['Date']).timestamp()),
-                    "m_from": m['From'],
-                    "m_to": m['To'],
-                    "subject": m['Subject'],
-                    "body": body
-                }
-                c.execute(f'INSERT INTO emails({",".join(data.keys())})'
-                          f'VALUES ({",".join("?"*len(data))});',
-                          tuple(data.values()))
+            index_folder(user=user, folder=folder, cursor=c)
     conn.commit()
 
 def label():
