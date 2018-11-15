@@ -31,11 +31,29 @@ ENRON_INDEX_FOLDER = Path(os.environ.get("ENRON_INDEX_FOLDER")).expanduser()
 ENRON_LOG = Path(os.environ.get("ENRON_LOG")).expanduser()
 logging.basicConfig(filename=str(ENRON_LOG), filemode='w', level=logging.DEBUG)
 
-def get_index(user):
+def get_connection(user):
     filename = ENRON_INDEX_FOLDER / (user + '.sqlite3')
     if not filename.is_file():
         raise ValueError(user, 'is not in index folder')
     return sqlite3.connect(str(filename))
+
+def get_dataframe(user, received_only=False):
+    conn = get_connection(user)
+    df = pd.read_sql_query('select * from emails;', conn, index_col='id')
+
+    # Caste the columns into the correct types
+    type_dict = {
+        str: ['user', 'folder', 'filename', 'm_from', 'm_to', 'subject', 'body'],
+        bool: ['did_reply'],
+    }
+    for key, columns in type_dict.items():
+        df[columns] = df[columns].astype(key)
+    df['date'] = pd.to_datetime(df.date * 1e9)
+
+    if not received_only:
+        return df
+    # Filter out any row where folder contains the word 'sent'
+    return df[~df.folder.str.contains('sent', flags=re.IGNORECASE)]
 
 def index_folder(user, folder, cursor):
     for email_file in (ENRON_FOLDER/user/folder).glob('*'):
@@ -114,6 +132,7 @@ def index(*users):
         for user in user_bar:
             user_bar.set_description("{:<15}".format(user))
             index(user)
+        user_bar.close()
 
     elif len(users) == 1:
         user = users[0]
@@ -127,6 +146,7 @@ def index(*users):
         folder_bar = tqdm(folders, leave=False, desc='folders')
         for folder in folder_bar:
             index_folder(user=user, folder=folder, cursor=c)
+        folder_bar.close()
         conn.commit()
 
     else:        
@@ -153,10 +173,11 @@ def label(*users):
         for user in user_bar:
             user_bar.set_description("{:<15}".format(user))
             label(user)
+        user_bar.close()
 
     elif len(users) == 1:
         user = users[0]
-        conn = get_index(user)
+        conn = get_connection(user)
         c = conn.cursor()
 
         emails_df = pd.read_sql_query(f'select * from emails where user="{user}";', conn)
@@ -181,13 +202,14 @@ def label(*users):
             this_id = email['id']
             c.execute(f'UPDATE emails SET did_reply=1, reply_id= ? WHERE id=?;', (reply_id, this_id,))
             conn.commit()
+        emails_bar.close()
         c.execute(f'UPDATE emails SET did_reply=0 WHERE did_reply IS NULL;')
         conn.commit()
     else:
         assert False, 'length of args should be positive. Perhaps ENRON_FOLDER is empty'
 
 def is_labeled(user):
-    c = get_index(user).cursor()
+    c = get_connection(user).cursor()
     to_be_labeled = c.execute('select count(*) from emails where did_reply IS NULL;').fetchone()[0]
     return to_be_labeled == 0
 
