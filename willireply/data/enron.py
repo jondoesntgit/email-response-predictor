@@ -49,18 +49,20 @@ def index():
     import datetime
     from dateutil import parser
 
-    users = ['allen-p', 'martin-t']
+    users = list(f.stem for f in ENRON_FOLDER.iterdir())
 
-    user_bar = tqdm(users, desc='users')
+    user_bar = tqdm(users, desc='users', leave=False)
     for user in user_bar:
         user_bar.set_description("{:<15}".format(user))
         folders = [f.stem for f in (ENRON_FOLDER/user).iterdir() if f.is_dir()]
-        folder_bar = tqdm(folders)
+        folder_bar = tqdm(folders, leave=False, desc='folders')
         for folder in folder_bar:
-            folder_bar.set_description("{:<15}".format(folder))
+        #    folder_bar.set_description("{:<15}".format(folder))
             for email_file in (ENRON_FOLDER/user/folder).glob('*'):
                 assert email_file.exists()
-                assert email_file.is_file()
+                if not email_file.is_file():
+                    print(email_file, "is not a file")
+                    continue
                 with open(email_file) as f:
                     try:
                         m = email.message_from_file(f)
@@ -92,8 +94,8 @@ def index():
 def label():
     conn = sqlite3.connect(str(ENRON_INDEX))
     c = conn.cursor()
-    users = ['allen-p', 'martin-t']
-    user_bar = tqdm(users)
+    users = [res[0] for res in c.execute('SELECT DISTINCT user FROM emails')]
+    user_bar = tqdm(users, leave=False)
     for user in user_bar:
         user_bar.set_description('{:<15}'.format(user))
         emails_df = pd.read_sql_query(f'select * from emails where user="{user}";', conn)
@@ -102,7 +104,8 @@ def label():
         sent_emails = emails_df.query(f'folder in {sent_folders}')
 
         emails_with_responses = []
-        for received_idx, email in tqdm(list(received_emails.iterrows())):
+        emails_bar = tqdm(list(received_emails.iterrows()), leave=False, desc='emails')
+        for received_idx, email in emails_bar:
             date = email['date']
             subject = email['subject']
             body = email['body']
