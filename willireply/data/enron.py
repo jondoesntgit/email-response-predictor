@@ -31,6 +31,12 @@ ENRON_INDEX_FOLDER = Path(os.environ.get("ENRON_INDEX_FOLDER")).expanduser()
 ENRON_LOG = Path(os.environ.get("ENRON_LOG")).expanduser()
 logging.basicConfig(filename=str(ENRON_LOG), filemode='w', level=logging.DEBUG)
 
+def get_index(user):
+    filename = ENRON_INDEX_FOLDER / (user + '.sqlite3')
+    if not filename.is_file():
+        raise ValueError(user, 'is not in index folder')
+    return sqlite3.connect(str(filename))
+
 def index_folder(user, folder, cursor):
     for email_file in (ENRON_FOLDER/user/folder).glob('*'):
         assert email_file.exists()
@@ -150,10 +156,7 @@ def label(*users):
 
     elif len(users) == 1:
         user = users[0]
-        filename = ENRON_INDEX_FOLDER / (user + '.sqlite3')
-        if not filename.is_file():
-            raise ValueError(user, 'is not in index folder')
-        conn = sqlite3.connect(str(filename))
+        conn = get_index(user)
         c = conn.cursor()
 
         emails_df = pd.read_sql_query(f'select * from emails where user="{user}";', conn)
@@ -184,13 +187,15 @@ def label(*users):
         assert False, 'length of args should be positive. Perhaps ENRON_FOLDER is empty'
 
 def is_labeled(user):
-    filename = ENRON_INDEX_FOLDER / (user + '.sqlite3')
-    if not filename.is_file():
-        raise ValueError(user, 'is not in index folder')
-    conn = sqlite3.connect(str(filename))
-    c = conn.cursor()
+    c = get_index(user).cursor()
     to_be_labeled = c.execute('select count(*) from emails where did_reply IS NULL;').fetchone()[0]
     return to_be_labeled == 0
+
+def delete_indices():
+    for f in ENRON_INDEX_FOLDER.iterdir():
+        f.unlink()
+
+
 
 if __name__ == "__main__":
     index()
