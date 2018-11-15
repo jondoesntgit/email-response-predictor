@@ -40,6 +40,8 @@ def get_connection(user):
 def get_dataframe(user, received_only=False):
     conn = get_connection(user)
     df = pd.read_sql_query('select * from emails;', conn, index_col='id')
+    df['thread'] = df['body'][:]
+    df['body'] = df['body'].apply(lambda x: re.split(r'-----Original Message-----|on\s[0-1][0-9]/[0-3][0-9]/[0-9]{2,4}', x)[0])
 
     # Caste the columns into the correct types
     type_dict = {
