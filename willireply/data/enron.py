@@ -43,7 +43,7 @@ def get_dataframe(user, received_only=False):
 
     # Caste the columns into the correct types
     type_dict = {
-        str: ['user', 'folder', 'filename', 'm_from', 'm_to', 'subject', 'body'],
+        str: ['user', 'folder', 'filename', 'm_from', 'm_to', 'm_cc', 'subject', 'body'],
         bool: ['did_reply'],
     }
     for key, columns in type_dict.items():
@@ -82,6 +82,7 @@ def index_folder(user, folder, cursor):
             "date": int(parser.parse(m['Date']).timestamp()),
             "m_from": m['From'],
             "m_to": m['To'],
+            "m_cc": m['cc'],
             "subject": m['Subject'],
             "body": body
         }
@@ -103,6 +104,7 @@ def make_empty_index(filename):
         date INT,
         m_from TEXT,
         m_to TEXT,
+        m_cc TEXT,
         subject TEXT,
         body TEXT,
         did_reply INT,
