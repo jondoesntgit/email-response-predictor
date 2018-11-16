@@ -46,4 +46,4 @@ def words_in_body(df):
     return df['body'].apply(lambda x: len(x.split()))
 
 def thread_length(df):
-    return df['body'] = df['body'].apply(lambda x: re.split(r'-----Original Message-----|on\s[0-1][0-9]/[0-3][0-9]/[0-9]{2,4}', x)[0])
+    return df['body'].apply(lambda x: len(re.split(r'-----Original Message-----|on\s[0-1][0-9]/[0-3][0-9]/[0-9]{2,4}', x)))

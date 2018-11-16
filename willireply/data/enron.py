@@ -214,7 +214,7 @@ def label(*users):
 
 def is_labeled(user):
     c = get_connection(user).cursor()
-    to_be_labeled = c.execute('select count(*) from emails where did_reply IS NULL;').fetchone()[0]
+    to_be_labeled = c.execute('select count(*) from emails where did_reply IS NULL LIMIT 1;').fetchone()[0]
     return to_be_labeled == 0
 
 def delete_indices():

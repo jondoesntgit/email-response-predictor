@@ -42,7 +42,7 @@ We propose creating a model that trains on a corpus of emails, and produces a pr
 
 \section*{Datasets}
 
-First, we constructed a Python3 script that downloads several hundred to several thousand of a user's most-recent emails from a GMail server. In \texttt{p-proposal}, we demonstrated that a classifier could train on about one hundred emails, and outperform a human oracle who was unfamiliar with my email habits. This experiment was limited in two ways: first, email habits vary substantially from one user to the next, and if the human oracle had the opportunity to view the training set, she would be able to observe certain email habits that deviated from hers, and her performance would likely improve to that of the model or better. Secondly, with only one-hundred training samples, it is possible that the model performed well because of overfitting.
+First, we constructed a Python3 script that downloads several hundred to several thousand of a user's most-recent emails from a GMail server. In \texttt{p-proposal}, we demonstrated that a classifier could train on about one hundred emails, and outperform a human oracle who was unfamiliar with Jonathan email habits. This experiment was limited in two ways: first, email habits vary substantially from one user to the next, and if the human oracle had the opportunity to view the training set, she would be able to observe certain email habits that deviated from hers, and her performance would likely improve to that of the model or better. Secondly, with only one-hundred training samples, it is possible that the model performed well because of overfitting.
 
 In the last three weeks, we have sought to improve the model by training on a substantially larger dataset. A corpus of about 500,000 emails from 150 distinct users was deemed public domain after the investigation of the Enron Corporation's collapse\cite{enroncorpus}. For each user, there exist between a few tens to several thousands of emails. This dataset allows for a thorough and reproducible investigation to be performed on a static snapshot of the email habits of over one-hundred individuals.
 
@@ -119,21 +119,44 @@ While these features grant the model a richer picture of the background of the e
 
 \section*{Model}
 
-Thus far, we have implemented a stochastic-gradient-descent (SGD) regressor using various combinations of the universal features. In our prelinary tests, we have trained the model on the emails of a few tens of users (representing tens of thousands of emails), and validated the model on a user that was not part of the training set. 
+Thus far, we have considered two different models. In the case where we train on 50\% of a user's emails, and test on the other 50\%, the datasets are small enough (a few thousand emails at maximum) that we can use \texttt{sklearn}'s \texttt{LinearRegressor} to fit and predict the data. In the case where we want to train on several user's emails, and validate on other user's data, we implement \texttt{sklearn}'s stochastic-gradient-descent (SGD) regressors, and perform partial fits on each user's email sets.
 
 \section*{Evaluation}
 
-Binary classifiers are often characterized by their `precision' and `recall' parameters. In our case, the precision of the `reply' label will tell us how often a prediction that we would reply to an email was correct, and the recall of the `reply' label will tell us what percentage of the emails that require a response are correctly being identified. Because the majority of email that most users received is often requires no action (spam, informational, etc...), the precision and recall of the `no reply' label will always be quite high, and we are not interested in optimizing these parameters.
+Binary classifiers are often characterized by their `precision' and `recall' parameters. In our case, the precision of the `reply' label will tell us how often a prediction that we would reply to an email was correct, and the recall of the `reply' label will tell us what percentage of the emails that require a response are correctly being identified. Because the majority of email that most users receive often requires no action (spam, informational, etc...), the precision and recall of the `no reply' label will always be quite high, and we are not interested in optimizing these parameters.
 
 Recall and precision are both important, and so our metric will include a component of both, but the reply recall is more important for our algorithm. Failing to capture an email that requires a response (recall) is more critical than the inconvenience of being exposed to an email that requires no response (precision). In this case, we might use an $F_\beta$ metric\cite{fbetawikipedia}. For $\beta = 1$, precision and recall are weighted equally. For $\beta > 1$, recall is weighted more heavily. We arbitrarily set $\beta = 2$, to make recall twice as important as precision. This is the overall metric that we use to evaluate our performance. $F_2 = 0$ is the worst case scenario, $F_2 = 1$ is the best case scenario.
 
-The figure of 
-
 \section*{Experimental Results}
 
-Across a majority of the tests that we have done, we have achieved an $F_2$-value of about 17\%. In our initial testing, a human oracle labeled 200 of Jonathan's emails, and achieved a $F_2$-value of 15.5\%. So these models we have developed thus far on the Enron corpus seem to perform somewhat better than a human oracle. 
+In our first test, we use \texttt{sklearn.LinearRegressor} for each user, training on 50\% of the emails, and testing on the other 50\%. We take the $F_2$ score of each user. To estimate performance across all users, we take a weighted average of the $F_2$ scores, where the weight is determined by how many responses the user sent, to achieve an overall $F_2$ score of 0.340. We reason that $F_2$ scores for users who barely sent any responses will not be as representative as the $F_2$ scores of users who sent many responses. Also, we note that users who have more labeled `replied-to' emails tend to have higher $F_2$ scores associated with their predictor. Given our labeling script, the typical user in this corpus responds to anywhere between 2\% and 13\% of their inbound email. This may increase as we revise our labeling script.
 
-However, 17\% is not significant enough to rely on this algorithm in practice to capture important emails. We can reference other works that have sought to classify emails based on their likelyhood to respond. \cite{knight:2014} was able to achieve $F_1$ scores of about 40-50\% when training and validating on the same personal email account. \cite{bromberg:2013} report the recall and precision for training and recall on a personal email account, which can be converted into an $F_{\beta = 2}$ score via
+One observation from this fit is that it achieves a substantially large recall for the `reply' label (frequently greater than 90\%), but very low recall for `no-reply' (often less than 10\%). It also achieves low precision for `reply' and high precision for `no-reply'. A typical result is shown below:
+
+\begin{center}
+\begin{minted}{text}
+user: thomas-p
+training + testing: 1130 emails (29 total replies)
+
+test report:
+             precision    recall  f1-score   support
+
+   no reply       0.98      0.12      0.21       549
+      reply       0.03      0.94      0.06        16
+
+avg / total       0.96      0.14      0.21       565
+
+f2-score = 0.133214920071
+\end{minted}
+\end{center}
+
+At this time, we are not sure of the mechanism that is causing this behavior. But we do know that if we can improve precision (even slightly) at the expense of recall, our overall $F_2$ metric should improve.
+
+For our second test, we train our SGD Regressor on 50\% of the users, and validate on other users. We use the same weighting to achieve an aggregate $F_2$ score. For this test we achieved an $F_2$ value of 0.337 (just below the value for the LinearRegression within a single user's email history).
+ Again we notice that the model achieves high recall (often above 90\%), but very low precision.
+In our initial testing, a human oracle labeled 200 of Jonathan's emails, and achieved a $F_2$-value of 15.5\%. So these models we have developed thus far on the Enron corpus seem to perform somewhat better than a human oracle.
+
+However, 34\% is not significant enough to rely on this algorithm in practice to capture important emails. In fact, this algorithm is labeling most emails as `reply-to', which is not significantly better than what email inboxes do by default (show you everything, with the option to reply). We can reference other works that have sought to classify emails based on their likelyhood to respond. \cite{knight:2014} was able to achieve $F_1$ scores of about 40-50\% when training and validating on the same personal email account. \cite{bromberg:2013} report the recall and precision for training and recall on a personal email account, which can be converted into an $F_{\beta = 2}$ score via
 $$
 F_\beta = (1+\beta^2)\frac{\mathrm{precision} \cdot \mathrm{recall}}{\beta^2 \cdot \mathrm{precision} + \mathrm{recall}}.
 $$
@@ -149,7 +172,7 @@ First, email software varies from user to user in the way that they handle threa
 
 Furthermore, every user has different email habits. Some users sign up to more marketing, and others keep their inboxes sparse. Some users prefer to use email for all communication, while other users may only use it for certain applications like business with external colleagues. Because each user's style is different, it is difficult to generalize a fit from user A's history to predict how user B will behave. Users themselves may change habits over time, so a fit from an Enron employee in 2001 may not accurately predict their email habits in 2018.
 
-In the upcoming weeks, we will be fine-tuning our model (possibly entertaining different loss functions, etc...), and adjusting some of our features to improve our $F_2$ score.
+In the upcoming weeks, we will be fine-tuning our model (possibly entertaining different loss functions, etc...), and adjusting some of our features to improve our $F_2$ score. We will also be checking if we can increase the accuracy of our labeling script (by perhaps incorporating the methods in \cite{cruzalbrecht:2017,knight:2014}).
 
 \bibliography{../bibliography} 
 \bibliographystyle{ieeetr}
