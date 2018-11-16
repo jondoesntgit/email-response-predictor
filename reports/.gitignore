@@ -7,3 +7,5 @@
 *.pdf
 *.dvi
 *.synctex.gz
+*.pygstyle
+*.pygtex
