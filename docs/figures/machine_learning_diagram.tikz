@@ -1,0 +1,64 @@
+ % -*- root: preamble.tex -*-
+\begin{tikzpicture}[>=latex]
+
+\newcommand{\envelop}{
+  \vcenter{\hbox{\includegraphics[height=8pt]{fontawesome/envelop}\,}}
+}
+
+\node[draw, align=center] (learner) {\textbf{learner} \\
+\texttt{model.fit(} 
+$\phi\!\left( \envelop \right), y $
+\texttt{)} };
+\draw (learner.west) ++ (8, 0) node[draw, anchor=west, align=center] (predictor) {\textbf{predictor}\\$\hat{y}$\texttt{ = model.predict(} $\phi\!\left( \envelop \right) $\texttt{)}};
+
+\node[draw, above=1cm of learner, align=center](train_feature_extractor) {\textbf{feature extractor}
+\\\vspace{-.1cm}\\$\phi(\envelop) = \begin{pmatrix} 
+\log\!\left(\mathtt{len(} \envelop \mathtt{.body)}\right) \\ 
+\log\!\left(1+\mathtt{len(} \envelop \mathtt{.to)}\right) \\ 
+\log\!\left(1+\mathtt{len(} \envelop \mathtt{.thread)}\right) \\ 
+\envelop \texttt{subject.lower.count('re:')} \\ 
+\envelop\texttt{.subject.count('?')} \\
+\vdots
+\end{pmatrix}$};
+
+\node[draw, above=1cm of predictor.north, align=center](predict_feature_extractor) {\textbf{feature extractor}
+\\\vspace{-.1cm}\\$\phi(\envelop) = \begin{pmatrix} 
+\log\!\left(\mathtt{len(} \envelop \mathtt{.body)}\right) \\ 
+\log\!\left(1+\mathtt{len(} \envelop \mathtt{.to)}\right) \\ 
+\log\!\left(1+\mathtt{len(} \envelop \mathtt{.thread)}\right) \\ 
+\envelop \texttt{subject.lower.count('re:')} \\ 
+\envelop\texttt{.subject.count('?')} \\
+\vdots
+\end{pmatrix}$};
+
+\newcounter{xpos}
+\setcounter{xpos}{-2.5}
+\foreach \x in {1, 2, 3, dots, 100000}{
+  \ifthenelse{\equal{\x}{dots}}{
+  \def\val{$\ldots$}
+  \draw (train_feature_extractor.north) ++ (1.8*\thexpos-.35, 1) node {\val};
+  }{
+  \def\val{($\envelop_{\x}, y_{\x})$}
+  \draw (train_feature_extractor.north) ++ (1.8*\thexpos, 1) node[draw] (m\x) {\val};
+  \draw[->, thick] (m\x) -- (train_feature_extractor);
+  }
+%{($\envelop_\x, y_\x)$};
+
+  \stepcounter{xpos}
+}
+
+\draw (predict_feature_extractor.north) ++ (0, 1) node[draw, label=right:$y_{10001}$), label=left:(] (m100001) {$\envelop_{100001}$};
+
+\draw[->, thick] (learner) -- (predictor); 
+\foreach \x in {0, ..., \thexpos}{
+\draw[->, thick] (train_feature_extractor.south) ++ (\x*.5, 0) -- (learner);
+\draw[->, thick] (train_feature_extractor.south) ++ (-\x*.5, 0) -- (learner);
+}
+
+\draw[->, thick] (predict_feature_extractor) -- (predictor);
+
+\draw[->, thick] (m100001) -- (predict_feature_extractor);
+
+\draw[->, thick] (predictor.south) -- ++ (0, -.5) node[draw, anchor=north] {$\hat{y}_{100001}$};
+
+\end{tikzpicture}

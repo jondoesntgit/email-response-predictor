@@ -1,0 +1,78 @@
+ % -*- root: preamble.tex -*-
+
+
+
+\newcommand{\folder}[1]{
+	node (#1) [fill=white]{\includegraphics[height=12pt]{fontawesome/folder}} node[right=.2cm, anchor=west]{#1} coordinate (#1_last) at (#1.south)
+}
+
+\newcommand{\closedfolder}[1]{
+	node (#1) [fill=white]{\includegraphics[height=12pt]{fontawesome/closed-folder}} node[right=.2cm, anchor=west]{#1} coordinate (#1_last) at (#1.south)
+}
+
+\newcommand{\email}[1]{
+	node (#1) [fill=white]{\includegraphics[height=12pt]{fontawesome/envelop}} node[right=.2cm, anchor=west]{#1}
+}
+
+\newcommand{\child}[1]{
+	(#1_last) -- (bottomy -| #1_last) coordinate (#1_last) -- ++ (\hsp, 0) coordinate (tmp)
+	(bottomy) ++ (0, -\vsp) coordinate(bottomy)
+	(tmp)
+
+}
+
+\newcommand{\ellipsis}{
+	node [fill=white]{\includegraphics[height=12pt]{fontawesome/ellipsis}} 
+}
+
+\newcommand{\childellipsis}[1]{
+	(bottomy) ++ (0, -.1) coordinate (bottomy)
+	(#1_last) -- (bottomy -| #1_last) coordinate (#1_last) ++ (\hsp, 0) coordinate (tmp)
+	(bottomy) ++ (0, -\vsp) ++ (0, -.1) coordinate(bottomy)
+	(tmp) node [fill=white]{\includegraphics[height=12pt]{fontawesome/ellipsis}} 
+}
+
+\begin{tikzpicture}
+
+\def\vsp{.5}
+\def\hsp{.5}
+
+\coordinate (bottomy) at (0,-.5);
+%\draw (0, 0) rectangle (1, 1);
+%\draw (0, 0) node[fill=white] {\includegraphics[height=12pt]{fontawesome/folder}} node[right=.2cm, anchor=west] {enron};
+
+\draw(0, 0) \folder{enron};
+  \draw \child{enron} \folder{allen-p};
+  	\draw \child{allen-p} \closedfolder{all documents};
+  	\draw \child{allen-p} \closedfolder{deleted items};
+    \draw \child{allen-p} \folder{inbox};
+	  \draw \child{inbox} \email{1.eml};
+  	  \draw \child{inbox} \email{2.eml};
+  	  \draw \childellipsis{inbox};
+	  \draw \child{inbox} \email{87.eml};
+    \draw \child{allen-p} \folder{sent};
+      \draw \child{sent} \email{1.eml};
+      \draw \child{sent} \email{2.eml};
+      \draw \childellipsis{sent};
+      \draw \child{sent} \email{706.eml};
+  \draw \child{enron} \folder{arnold-j};
+  	  \draw \child{arnold-j} \closedfolder{avaya};
+  	  \draw \child{arnold-j} \closedfolder{bridge};
+  	  \draw \childellipsis{arnold-j};
+      \draw \child{arnold-j} \closedfolder{inbox};
+      \draw \childellipsis{arnold-j};
+      \draw \child{arnold-j} \closedfolder{sent};
+  	  \draw \child{arnold-j} \closedfolder{sent email};
+	  \draw \childellipsis{arnold-j};
+	  \draw \child{arnold-j} \closedfolder{vulcan signs};
+  	  \draw \child{arnold-j} \closedfolder{weekly report};
+
+  \draw \child{enron} \closedfolder{arora-h};
+  \draw \child{enron} \closedfolder{badeer-r};
+  \draw \child{enron} \closedfolder{bailey-s};
+  \draw \child{enron} \closedfolder{bass-d};
+  \draw \child{enron} \closedfolder{baughman-e};
+  \draw \childellipsis{enron} \ellipsis;
+  \draw \child{enron} \closedfolder{zufferli-j};
+
+\end{tikzpicture}

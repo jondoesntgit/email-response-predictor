@@ -1,0 +1,57 @@
+% To compile each individual file, install Sublime Text 3, and install LaTeXing and LaTeXing-tikz packages.
+% You should then be able to write individual *.tikz files, and generate them using LaTeX's build function
+
+\documentclass{standalone}
+\usepackage[utf8]{inputenc}
+
+\usepackage{tikz}
+\usepackage[siunitx]{circuitikz}
+
+\usepackage{helvet}
+\usepackage{sansmath}
+\usepackage{sfmath}
+\usetikzlibrary{decorations.pathreplacing}
+\usepackage{pgfplots}
+
+\renewcommand{\familydefault}{\sfdefault}
+\usetikzlibrary{backgrounds}
+
+\sisetup{
+        mode=text, text-rm=\sffamily
+}
+
+\begin{document}
+
+\begin{tabular}{|c|c|c|c|c|c|c|c|c| c|c|c|c|}
+\hline
+\texttt{id} & \texttt{user} & \texttt{folder} & \texttt{filename} & \texttt{message id} & \texttt{date} & \texttt{from} & \texttt{to} & \texttt{cc} &
+subject & body & did reply & reply id 
+\\\hline
+1 & allen-p & notes inbox & 36.eml & 12357410.1075855679611.JavaMail.evans@thyme & 975524760 & christi.nicolay@enron.com & phillip.allen@enron.com & \texttt{NULL} & Re: Talking points about California Gas market & Phillip--To the extent that we can give Chair Hoecker our sp$\ldots$ & No & \texttt{NULL}
+\\
+2 & allen-p & notes inbox & 19.eml & 25849444.1075855679233.JavaMail.evans@thyme & 976723860 & yild@zdemail.zdlists.com & pallen@enron.com & \texttt{NULL} & Y-Life Daily: Bush will almost definitely be prez / Coach K chats & Y-Life Daily Bulletin: December 13, 2000. Note: If your e-mail $\ldots$ & No & \texttt{NULL}
+\\
+3 & allen-p & notes inbox & 50.eml & 18640335.1075855713056.JavaMail.evans@thyme & 989499900 & lisa.jacobson@enron.com & lisa.jacobson@enron.com, kevin.mcgowan@enron.com, $\ldots$ & \texttt{NULL} & RSVP REQUESTED - Emissions Strategy Meeting.... & Due to some of the problems with my email yesterday, I may not have $\ldots$ & No & \texttt{NULL}
+\\
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$  \\ 
+28 & allen-p & notes inbox &16.eml & 10157885.1075855679164.JavaMail.evans@thyme &976723260 & rebecca.cantrell@enron.com & phillip.allen@enron.com & \texttt{NULL} & Re: & Phillip -- Is the value axis on Sheet 2 of the ``socialprices'' $\ldots$ & Yes & 1425
+\\
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$  \\ 
+%
+373 & allen-p & deleted items & 435.eml & 25488440.1075862163573.JavaMail.evans@thyme &1006296630 & yevgeny.frolov@enron.com & k..allen@enron.com & tim.o'rourke@enron.com, brad.coleman@enron.com, $\ldots$ & Zero Option & Phillip, It will go along this lines: (Conservative) $\ldots$ & Yes & 898
+\\
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$  \\ 
+898 & allen-p & sent items &3.eml & 20939836.1075855376722.JavaMail.evans@thyme &1006810558 & k..allen@enron.com & h..lewis@enron.com, dutch.quigley@enron.com, $\ldots$ & \texttt{NULL} & FW: Zero Option & The project coordinators believe they can reach a solution $\ldots$ & No & \texttt{NULL}
+\\
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$  \\ 
+%
+1424&allen-p&sent&155.eml&4811710.1075855683141.JavaMail.evans@thyme&965397600&phillip.allen@enron.com&chris.gaskill@enron.com&\texttt{NULL}& \texttt{empty string} & can you build something to look at the historical prices from which $\ldots$ & No&\texttt{NULL}
+\\
+1425&allen-p&sent&556.eml&17099882.1075855719049.JavaMail.evans@thyme&976792500&phillip.allen@enron.com&jay.reitmeyer@enron.com&\texttt{NULL}&Re: & ----------Forwarded by Philip K Allen/HOU/ETC & No&\texttt{NULL}
+\\
+1426&allen-p&sent&468.eml&16542342.1075855717006.JavaMail.evans@thyme&981727500&phillip.allen@enron.com&stagecoachmama@hotmail.com&\texttt{NULL}& \texttt{empty string} & Lucy, Here is a draft of a memo we should distribute to the $\ldots$ & No&\texttt{NULL}
+\\
+$\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$ & $\vdots$  \\ \hline
+\end{tabular}
+
+\end{document}

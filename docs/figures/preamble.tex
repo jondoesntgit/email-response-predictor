@@ -1,0 +1,35 @@
+% To compile each individual file, install Sublime Text 3, and install LaTeXing and LaTeXing-tikz packages.
+% You should then be able to write individual *.tikz files, and generate them using LaTeX's build function
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{tikz}
+\usepackage[siunitx]{circuitikz}
+
+\usepackage{helvet}
+\usepackage{sansmath}
+\usepackage{sfmath}
+\usepackage{ifthen}
+\usepackage{amsmath}
+\usetikzlibrary{decorations.pathreplacing}
+\usepackage{pgfplots}
+
+\renewcommand{\familydefault}{\sfdefault}
+\usetikzlibrary{backgrounds}
+
+\sisetup{
+        mode=text, text-rm=\sffamily
+}
+
+\usetikzlibrary{positioning}
+\usetikzlibrary{circuits.logic.US}
+
+\usetikzlibrary{shapes}
+\usetikzlibrary{calc, 3d}
+
+\begin{document}
+
+\includegraphics{tikz.pdf}
+
+\end{document}
