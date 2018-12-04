@@ -5,6 +5,7 @@
 *.fls
 *.out
 *.pdf
+!p-poster/*.pdf
 *.dvi
 *.synctex.gz
 *.pygstyle
