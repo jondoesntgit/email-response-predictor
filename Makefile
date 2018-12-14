@@ -20,10 +20,8 @@ index:
 datasets: # TODO: Depends on index enron
 	python willireply/data/split_datasets.py
 
-feature_extractors:
+features:
 	python willireply/features/make_feature_extractors.py
-
-features: # TODO: depends on split_enron_data and create_feature_extractors
 	python willireply/features/extract_features.py
 
 models:

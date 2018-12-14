@@ -35,3 +35,8 @@ You may find that this takes a significant amount of time (several hours). If yo
    >>> enron.is_labeled('allen-p')
    True
 
+This can also be done from the project root by running
+
+.. code:: 
+
+   make index

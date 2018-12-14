@@ -23,6 +23,13 @@ Downloading the Enron Corpus
 
 The `Enron dataset <https://www.cs.cmu.edu/~./enron/>`_ contains about 500,000 emails from about 150 users. The compressed archive is 432 Mb when zipped, 2.5 Gb when unzipped. It can be `downloaded here <https://www.cs.cmu.edu/~./enron/enron_mail_20150507.tar.gz>`_, and should *not* be checked into version control. It should also probably not be kept in a cloud-synced service like Box or Dropbox. It's just too big.
 
+You can download and unzip the Enron Corpus by running from the project root
+
+.. code::
+
+   make download
+   make unzip
+
 Generating PDFs
 ---------------
 

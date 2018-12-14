@@ -41,7 +41,7 @@ df_test = pd.DataFrame()
 subsets = {}
 
 for user in tqdm(users):
-    df = enron.get_dataframe(user, received_only=True)
+    df = enron.get_dataframe(user, received_only=True)[['user', 'subject', 'filename']]
     email_indices = list(df.index)
     random.shuffle(email_indices)
 
@@ -54,17 +54,13 @@ for user in tqdm(users):
         "test": email_indices[break2:]
     }
 
-    #partial_df_train    = df.loc[email_indices[:break1]]
-    #partial_df_validate = df.loc[email_indices[break1:break2]]
-    partial_df_test     = df.loc[email_indices[break2:]]
-
-    df_validate = df_validate.append(partial_df_validate)
+    partial_df_test = df.loc[email_indices[break2:]]
+    df_test = df_test.append(partial_df_test)
 
 with open(SPLIT_FILE, 'w') as f:
     json.dump(subsets, f)
 
 split_file_directory = SPLIT_FILE.parent
 
-#df_train.to_pickle(split_file_directory / 'training_set.pkl')
-#df_validate.to_pickle(split_file_directory / 'validation_set.pkl')
+
 df_test.to_pickle(split_file_directory / 'test_set.pkl')

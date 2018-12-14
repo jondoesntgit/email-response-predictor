@@ -21,6 +21,7 @@ The repository structure modeled after this `template <https://drivendata.github
    enron
    gmail
    sqlite3
+   comparing_models
 
 
 Indices and tables
