@@ -34,7 +34,7 @@ These scripts can be run using
 Training Models
 ---------------
 
-Each model is an implementation of a ``BaseModel`` abstract class. Each implementation of ``BaseModel``should implement these functions
+Each model is an implementation of a ``BaseModel`` abstract class. Each implementation of ``BaseModel`` should implement these functions
 
 - ``__init__(name)`` - to initialize the model, at which time the default ``name`` value is set
 - ``train(x, y)`` - to train using training data and labels
