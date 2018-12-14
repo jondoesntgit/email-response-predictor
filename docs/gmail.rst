@@ -8,7 +8,7 @@ There's still a little bit more work to be done here, but as a first pass, if yo
 
 .. code::
 
-   python willireply/data/make_dataset.py
+   python willireply/data/gmail.py
 
 This will take your emails and drop them into ``data/raw``, and will also create an index of these emails in ``data.sqlite3``. In order for this to work, you must have put your GMail username and password in the ``.env`` file in your project root as ``WILLIREPLY_EMAIL`` and ``WILLIREPLY_PASSWORD``. 
 
