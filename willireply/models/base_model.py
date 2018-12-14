@@ -21,13 +21,13 @@ from jinja2 import Template
 from tqdm import tqdm
 import pandas as pd
 from willireply.data import enron
+import dill
 
 RESULTS_DIRECTORY = Path(os.environ.get('RESULTS_DIRECTORY')).expanduser()
 SPLIT_FILE = os.environ.get('SPLIT_FILE')
 SPLIT_FILE = Path(SPLIT_FILE).expanduser()
 
 df_validate = pd.read_pickle(SPLIT_FILE.parent / 'validation_set.pkl')
-
 
 class BaseModel(abc.ABC):
 
@@ -68,6 +68,13 @@ class BaseModel(abc.ABC):
                     title=self.name)
                 )
 
+    def serialize(self):
+        destination = RESULTS_DIRECTORY / self.name
+        destination.mkdir(parents=True, exist_ok=True)
+        with (destination / self.name).with_suffix('.pkl').open('wb') as f:
+            dill.dump(self, f)
+
+
 
 class LeastSquares(BaseModel):
     def __init__(self):
@@ -95,12 +102,12 @@ class HingeLoss(BaseModel):
 if __name__ == '__main__':
 
     model = LeastSquares()
-    #model.feature_extractor = FeatureExtractor.from_pickle('simple')
+
     fe = FeatureExtractor.from_pickle('simple')
 
-    model.feature_extractor = fe.name
     model.train(*fe.get_dataset('train'))
     model.visualize(*fe.get_dataset('test'))
+    model.serialize()
 
 #    model = HingeLoss()
 #    model.train(*fe.get_dataset('train'))
