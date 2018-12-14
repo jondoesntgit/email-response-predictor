@@ -51,14 +51,14 @@ class BaseModel(abc.ABC):
 
 
 
-        destination = RESULTS_DIRECTORY / self.name
+        destination = RESULTS_DIRECTORY
         destination.mkdir(parents=True, exist_ok=True)
 
         template_file = Path(__file__).parent / 'results_template.html'
         with template_file.open('r') as f:
             template = Template(f.read())
 
-        with (destination / 'results.html').open('w') as f:
+        with (destination / self.name).with_suffix('.html').open('w') as f:
             f.write(
                 template.render(
                     false_positives = df_validate.iloc[false_positives],
@@ -69,9 +69,9 @@ class BaseModel(abc.ABC):
                 )
 
     def serialize(self):
-        destination = RESULTS_DIRECTORY / self.name
+        destination = RESULTS_DIRECTORY
         destination.mkdir(parents=True, exist_ok=True)
-        with (destination / self.name).with_suffix('.pkl').open('wb') as f:
+        with (destination / self.name ).with_suffix('.pkl').open('wb') as f:
             dill.dump(self, f)
 
 
