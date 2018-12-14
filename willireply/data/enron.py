@@ -124,7 +124,7 @@ def index(*users):
     Otherwise, raise a value error
     """
     if not users:
-        users = list(f.stem for f in ENRON_FOLDER.iterdir())
+        users = get_all_users()
 
     if len(users) > 1:
         # if we will fail, fail early
@@ -221,8 +221,14 @@ def delete_indices():
     for f in ENRON_INDEX_FOLDER.iterdir():
         f.unlink()
 
+def get_all_users():
+    return list(f.stem for f in ENRON_FOLDER.iterdir())
 
 
 if __name__ == "__main__":
-    index()
-    label()
+    users = get_all_users()
+    for user in tqdm(users):
+        if is_labeled(user):
+            continue
+        index(user)
+        label(user)
